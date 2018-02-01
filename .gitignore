@@ -34,3 +34,4 @@ vignettes/*.pdf
 
 # All csv files
 *.csv
+.Rproj.user

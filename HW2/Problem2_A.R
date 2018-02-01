@@ -56,7 +56,7 @@ print(accuracy)
 
 }
 
-#ApplyNaiveClassifier("mnist_train.csv", "mnist_test.csv", 28 * 28, TRUE)
-#ApplyNaiveClassifier("mnist_train.csv", "mnist_test.csv", 28 * 28, FALSE)
+ApplyNaiveClassifier("mnist_train.csv", "mnist_test.csv", 28 * 28, TRUE)
+ApplyNaiveClassifier("mnist_train.csv", "mnist_test.csv", 28 * 28, FALSE)
 ApplyNaiveClassifier("mnist_train_stretched.csv", "mnist_test_stretched.csv", 20 * 20, TRUE)
 ApplyNaiveClassifier("mnist_train_stretched.csv", "mnist_test_stretched.csv", 20 * 20, FALSE)

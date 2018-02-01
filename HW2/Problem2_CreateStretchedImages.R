@@ -1,3 +1,4 @@
+library(imager)
 
 # load label files
 apply_Thresholding = function(m_dataFrame) {
@@ -72,10 +73,12 @@ for(i in 1:length(v_testingLabels)){
   img_tempImage <- resize(img_tempImage, 20, 20)
   m_tempImage <- matrix(img_tempImage, 20, 20)
   m_resizedTestingFeatures[i,] <- unlist(m_tempImage)
+  if(i %% 10 == 0)
+    print(i)#for debugging
 }
 m_resizedTestingFeatures <- cbind(m_resizedTestingFeatures, v_testingLabels)
 write.csv(m_resizedTestingFeatures, file=t_outputFile, row.names=FALSE, col.names = FALSE)
 }
 
-PreProcessImage('mnist_test.csv', "mnist_test_stretched.csv")
-PreProcessImage('mnist_train.csv', "mnist_train_stretched.csv")
+PreProcessImage('mnist_test.csv', "mnist_test_stretched2.csv")
+#PreProcessImage('mnist_train.csv', "mnist_train_stretched2.csv")
