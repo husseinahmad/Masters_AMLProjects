@@ -21,7 +21,7 @@ v_trainingLabels <- v_labels[v_trainingData]
 
 m_testingFeatures <- m_data[-v_trainingData,]
 v_testingLabels <- v_labels[-v_trainingData]
-model <- apply_ssvm(m_trainingFeatures, v_trainingLabels, 0.01, s_holdOutEvalSize = 50)
+model <- apply_ssvm(m_trainingFeatures, v_trainingLabels, 0.01, s_holdOutEvalSize = 50, n = 100, s_seasons = 50)
 
 results <- apply_ssvm_eval(m_testingFeatures, model)
 print(results)
@@ -30,10 +30,10 @@ accuracy <- CalculateAccuracy(results, v_testingLabels)
 print("Accuracy")
 print(accuracy)
 
-model<- svmlight(m_trainingFeatures, v_trainingLabels)
-m_predictions<-predict(model,newdata=m_testingFeatures)
-labels<-m_predictions$class
-accuracy <- sum(labels==v_testingLabels)/(sum(labels==v_testingLabels)+sum(!(labels==v_testingLabels)))
-
-print(accuracy)
+#compare to svm light
+#model<- svmlight(m_trainingFeatures, v_trainingLabels)
+#m_predictions<-predict(model,newdata=m_testingFeatures)
+#labels<-m_predictions$class
+#accuracy <- sum(labels==v_testingLabels)/(sum(labels==v_testingLabels)+sum(!(labels==v_testingLabels)))
+#print(accuracy)
 

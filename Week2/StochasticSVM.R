@@ -28,7 +28,7 @@ update_weights = function(v_x,s_y,v_a,s_b,step,lambda){
 }
 
 # main function
-apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons = 50, s_steps = 300, s_evaluationRate = 50, m = 1, n = 50, s_holdOutEvalSize = 50) {
+apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons = 50, s_steps = 300, s_evaluationRate = 30, m = 1, n = 50, s_holdOutEvalSize = 50) {
 
   v_cost_plot <- vector("numeric", (s_steps / s_evaluationRate) * s_seasons)
   print(length(v_cost_plot))
@@ -55,8 +55,8 @@ apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons 
       if(j %% s_evaluationRate == 0)
       {
         v_currentCost <- calculate_iteration_cost(m_seasonValidationFeatures, m_seasonValidationLabels, v_a, s_b, v_lambda)
-        #print(append(i*j, v_currentCost))
-        v_cost_plot[(j / s_evaluationRate) * i] = v_currentCost
+        print(append((j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate)), v_currentCost))
+        v_cost_plot[(j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate))] = v_currentCost
       }
     }
   }
@@ -80,3 +80,4 @@ CalculateAccuracy = function(v_results, v_labels){
   v_equal <- as.vector(v_results) == as.vector(v_labels)
   return(sum(v_equal) / length(v_equal))
 }
+
