@@ -11,6 +11,19 @@ calculate_iteration_cost = function(m_x, v_y, v_a, s_b, s_lambda){
   return (training_cost + s_g0)
 }
 
+CalculateAccuracy = function(v_results, v_labels){
+  v_equal <- as.vector(v_results) == as.vector(v_labels)
+  return(sum(v_equal) / length(v_equal))
+}
+
+apply_ssvm_eval = function(data, model){
+  s_featCount <- length(model) - 1
+  scores <- apply(data, c(1), function(x) sum(x * model[-length(model)]) + model[length(model)])
+  scores[scores > 0] <- 1
+  scores[scores < 0] <- -1
+  return (scores)
+}
+
 # using gradient of one example
 update_weights = function(v_x,s_y,v_a,s_b,step,lambda){
   mult_score <- s_y * (sum(v_x * v_a) + s_b)
@@ -31,6 +44,7 @@ update_weights = function(v_x,s_y,v_a,s_b,step,lambda){
 apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons = 50, s_steps = 300, s_evaluationRate = 30, m = 1, n = 50, s_holdOutEvalSize = 50) {
 
   v_cost_plot <- vector("numeric", (s_steps / s_evaluationRate) * s_seasons)
+  v_weights_abs <- vector("numeric", (s_steps / s_evaluationRate) * s_seasons)
   print(length(v_cost_plot))
   v_a <- runif(ncol(m_trainingFeatures),0,1)
   s_b <- 1
@@ -54,30 +68,21 @@ apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons 
       s_b <- l_updatedWeights[[2]]
       if(j %% s_evaluationRate == 0)
       {
-        v_currentCost <- calculate_iteration_cost(m_seasonValidationFeatures, m_seasonValidationLabels, v_a, s_b, v_lambda)
-        print(append((j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate)), v_currentCost))
-        v_cost_plot[(j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate))] = v_currentCost
-      }
+        #v_currentCost <- calculate_iteration_cost(m_seasonValidationFeatures, m_seasonValidationLabels, v_a, s_b, v_lambda)
+        v_currentValidationScores <- apply_ssvm_eval(m_seasonValidationFeatures, c(v_a,s_b))
+        v_currentCost <- CalculateAccuracy(v_currentValidationScores, m_seasonValidationLabels)
+        #print(append((j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate)), v_currentCost))
+        s_currentIndex <- (j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate))
+        v_cost_plot[s_currentIndex] = v_currentCost
+        v_weights_abs[s_currentIndex] = sqrt(sum(sapply(v_a, function(x) x^2)) + sum(s_b^2))
+      } 
     }
   }
-    plot(1:length(v_cost_plot), v_cost_plot, type="n")
-    lines(1:length(v_cost_plot), v_cost_plot)
+    #plot(1:length(v_cost_plot), v_cost_plot, type="n")
+    #lines(1:length(v_cost_plot), v_cost_plot)
     #plot_ly(as.data.frame(v_cost_plot), type = 'scatter', mode = 'lines')
     print(v_a)
     print(s_b)
-    return(c(v_a,s_b))
-}
-
-apply_ssvm_eval = function(data, model){
-    s_featCount <- length(model) - 1
-    scores <- apply(data, c(1), function(x) sum(x * model[-length(model)]) + model[length(model)])
-    scores[scores > 0] <- 1
-    scores[scores < 0] <- -1
-    return (scores)
-}
-
-CalculateAccuracy = function(v_results, v_labels){
-  v_equal <- as.vector(v_results) == as.vector(v_labels)
-  return(sum(v_equal) / length(v_equal))
+    return(list(c(v_a,s_b), v_cost_plot, v_weights_abs))
 }
 
