@@ -74,7 +74,7 @@ apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons 
         #print(append((j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate)), v_currentCost))
         s_currentIndex <- (j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate))
         v_cost_plot[s_currentIndex] = v_currentCost
-        v_weights_abs[s_currentIndex] = sqrt(sum(sapply(v_a, function(x) x^2)) + sum(s_b^2))
+        v_weights_abs[s_currentIndex] = sum(sapply(v_a, function(x) x^2)) + s_b^2
       } 
     }
   }
