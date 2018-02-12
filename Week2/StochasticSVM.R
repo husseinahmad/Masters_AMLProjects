@@ -45,9 +45,9 @@ apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons 
 
   v_cost_plot <- vector("numeric", (s_steps / s_evaluationRate) * s_seasons)
   v_weights_abs <- vector("numeric", (s_steps / s_evaluationRate) * s_seasons)
-  print(length(v_cost_plot))
+  # start with random factors
   v_a <- runif(ncol(m_trainingFeatures),0,1)
-  s_b <- 1
+  s_b <- runif(1,0,1)
   for(i in 1:s_seasons)
   {
     step <- m / (i + n)
@@ -68,21 +68,17 @@ apply_ssvm = function(m_trainingFeatures, v_trainingLabels, v_lambda, s_seasons 
       s_b <- l_updatedWeights[[2]]
       if(j %% s_evaluationRate == 0)
       {
-        #v_currentCost <- calculate_iteration_cost(m_seasonValidationFeatures, m_seasonValidationLabels, v_a, s_b, v_lambda)
         v_currentValidationScores <- apply_ssvm_eval(m_seasonValidationFeatures, c(v_a,s_b))
         v_currentCost <- CalculateAccuracy(v_currentValidationScores, m_seasonValidationLabels)
-        #print(append((j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate)), v_currentCost))
         s_currentIndex <- (j / s_evaluationRate) + ((i-1)*(s_steps/s_evaluationRate))
         v_cost_plot[s_currentIndex] = v_currentCost
         v_weights_abs[s_currentIndex] = sum(sapply(v_a, function(x) x^2)) + s_b^2
       } 
     }
   }
-    #plot(1:length(v_cost_plot), v_cost_plot, type="n")
-    #lines(1:length(v_cost_plot), v_cost_plot)
-    #plot_ly(as.data.frame(v_cost_plot), type = 'scatter', mode = 'lines')
-    print(v_a)
-    print(s_b)
-    return(list(c(v_a,s_b), v_cost_plot, v_weights_abs))
+
+  #print(v_a)
+  #print(s_b)
+  return(list(c(v_a,s_b), v_cost_plot, v_weights_abs))
 }
 
