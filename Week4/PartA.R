@@ -1,5 +1,4 @@
-#m_data <- read.csv("cifar-10-batches-bin/allData.csv", header=TRUE)
-#m_data <- as.matrix(m_data)
+m_data <- read.csv("cifar-10-batches-bin/allData.csv", header=TRUE)
 v_labels <- m_data[,1]
 m_features <- m_data[,-1]
 
