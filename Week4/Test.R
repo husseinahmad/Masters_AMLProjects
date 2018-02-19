@@ -15,10 +15,12 @@
 
 # method 2
 
-pca2 <- princomp(m_matrix)
-p <- pca2$scores
-p[,3] <- 0
-restoration <- t(pca2$loadings %*% t(p) + pca2$center) #pca
+pca2 <- princomp(m_matrix) #princomp(m_matrix) #
+transformed <- pca2$scores #pca2$x
+#p[,3] <- 0
+eigenVecs <- pca2$loadings #pca2$rotation #
+eigenVecs[,3] <- 0
+restoration <- t((eigenVecs %*% t(transformed)) + pca2$center) #pca
 difference <- (restoration - m_matrix) 
 difference2 <- difference ^ 2
 

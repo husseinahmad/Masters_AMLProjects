@@ -37,4 +37,3 @@ ggplot(data=mds.data, aes(x=X, y=Y, label=as.character(v_catnames[,]))) +
   ylab("Dimension 2") +
   ggtitle("Distance Between Categories")
 
-#barplot(v_errors, main="Reconstruction Error Per Category",ylab="Error", xlab="Categories", names.arg=v_catnames[,])
