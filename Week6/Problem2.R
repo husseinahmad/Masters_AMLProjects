@@ -168,7 +168,7 @@ m_splitData <- SplitData(m_data, 0.8)
 m_data <- m_splitData$train
 m_test <- m_splitData$test # untouched data
 
-s_signalHeight <- 25 #25/300 got 80%
+s_signalHeight <- 10 #25/300 got 80% highest accuracy
 s_centersCount <- 300 #also represents number of features as it's a histogram
 m_quantizedData <- matrix(0,0,s_signalHeight * 3)
 for(i in 1:14)
@@ -199,4 +199,6 @@ v_predictionResults <- predict(classificationModel, m_testingFeatures)
 s_accuracy <- sum(v_testingLabels == v_predictionResults) / length(v_predictionResults)
 print(s_accuracy)
 
+m_cm <- confusionMatrix(data=v_predictionResults, v_testingLabels)
+print(m_cm$table)
 
