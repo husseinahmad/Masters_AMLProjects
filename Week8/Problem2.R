@@ -15,9 +15,19 @@ m_trainingLabels <- v_labels[m_trainingData]
 m_testingFeatures <- m_features[-m_trainingData,]
 m_testingLabels <- v_labels[-m_trainingData]
 
+
+##### no regularization, no need for CV as there is no parameters
+fit <- glmnet(x = as.matrix(m_trainingFeatures), y = m_trainingLabels,  family = "binomial", lambda = 0)
+
+lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class")
+nmright <- sum( m_testingLabels==lmpredn) 
+errratem <- (1 - nmright/length(m_testingLabels))
+print(errratem)
+
+
 ##### Ridge regularization
 fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 0)
-s_lambdaPos <- match(fit$lambda.1se, fit$lambda)
+s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
 plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
 print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
@@ -30,7 +40,7 @@ print(errratem)
 
 ##### Lasso regularization
 fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 1)
-s_lambdaPos <- match(fit$lambda.1se, fit$lambda)
+s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
 plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
 print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
@@ -43,7 +53,7 @@ print(errratem)
 
 ##### Ridge regularization
 fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 0.5)
-s_lambdaPos <- match(fit$lambda.1se, fit$lambda)
+s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
 plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
 print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
