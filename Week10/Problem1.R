@@ -1,6 +1,6 @@
 library(klaR)
 library(caret)
-library(randomForest)
+
 
 v_voc <- read.table("..\\..\\Datasets\\Topics\\vocab.nips.txt", sep = '\t', header=FALSE)
 m_data <- read.table("..\\..\\Datasets\\Topics\\docword.nips.txt\\docword.nips.txt", sep = ' ', header=FALSE, skip = 3)
@@ -13,6 +13,7 @@ for(i in 1:nrow(m_data))
 }
 
 # initialize with kmeans to define initial parameters for Topic Modeling
+print("Initialize with  kmeans")
 init_model <- kmeans ( m_docs , centers = 30 )
 topics <- vector("list", length = 30)
 v_docs_topics <- vector("numeric", 1500)
@@ -46,6 +47,13 @@ v_topic_pis <- unlist(lapply(topics,nrow))
 v_topic_pis <- v_topic_pis / sum(v_topic_pis)
 # as a test, the following statement results in 30 1's
 #apply(m_topic_probabilities, c(1), sum)
+print("PI's")
+print(v_topic_pis)
+print("Topics")
+for(t in 1:30)
+{
+  print(v_voc[tail(order(m_topic_probabilities[t,]), 10),1])
+}
 
 #Apply EM algorithm
 
@@ -58,26 +66,63 @@ for(iteration in 1:50)
 {
   print(paste("iteration", iteration))
   # E Step
+  print("E Step")
   for(i in 1:nrow(m_docs))
   {
-    print(paste("document", i))
+    #print(paste("document", i))
     for(j in 1:nrow(m_topic_probabilities))
     {
-      m_hidden_deltas[i,j] <- exp(sum(log(m_topic_probabilities[j,] ^ m_docs[i,]))) * v_topic_pis[j]
+      m_hidden_deltas[i,j] <- sum(m_docs[i,] * log(m_topic_probabilities[j,])) + log(v_topic_pis[j])
     }
+    m_hidden_deltas[i,] <- m_hidden_deltas[i,] - logSumExp(m_hidden_deltas[i,])
+    m_hidden_deltas[i,] <- exp(m_hidden_deltas[i,]) #convert back by taking exp
   }
   
   # M Step
   # update p's
-  m_topic_probabilities <- t(m_hidden_deltas) %*% m_docs
+  #m_topic_probabilities <- t(m_hidden_deltas) %*% m_docs
   # then normalize, same size as hidden deltas, 1500 * 30
-  v_normalizer <- m_hidden_deltas * v_docs_sums
-  # now sum it per topic to be equal to 30
-  v_normalizer <- apply(v_normalizer, c(1), sum)
-  m_topic_probabilities <- m_topic_probabilities / v_normalizer
+  
+  # v_normalizer <- vector("numeric", 1500)
+  # for(i in 1:1500)
+  # {
+  #   v_normalizer[i] <- sum(m_hidden_deltas[i,] * v_docs_sums[i])
+  #   # now sum it per topic to be equal to 30
+  # }
+  
+  print("M Step")
+  for(j in 1:30)
+  {
+    accum <- vector("numeric", nrow(v_voc))
+    for(i in 1:1500)
+    {
+      accum  <- accum + (m_docs[i,] * m_hidden_deltas[i,j])
+    }
+    
+    m_topic_probabilities[j,] <- accum / sum(accum)
+  }
+  
+  # adjust topic probabilities again
+  m_topic_probabilities <- (lapply(topics, computeLM))
+  m_topic_probabilities <- do.call(rbind, m_topic_probabilities)
+  # normalize back
+  m_topic_probabilities <- m_topic_probabilities / (1 + (0.00001 * 12419))
+  
   
   #update pis
   v_topic_pis <- apply(m_hidden_deltas, c(2), sum) / nrow(m_docs)
+  
+  
+  #calculate log likelihood as a check
+  #inner1 <- m_docs %*% t(m_topic_probabilities)
+  #inner2 <- apply(inner1, c(1), function(x) x + log(v_topic_pis))
+  
 }
 
-
+print("PI's")
+print(v_topic_pis)
+print("Topics")
+for(t in 1:30)
+{
+  print(v_voc[tail(order(m_topic_probabilities[t,]), 10),1])
+}
