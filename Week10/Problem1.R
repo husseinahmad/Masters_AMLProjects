@@ -122,7 +122,9 @@ for(iteration in 1:50)
 print("PI's")
 print(v_topic_pis)
 print("Topics")
-for(t in 1:30)
-{
-  print(v_voc[tail(order(m_topic_probabilities[t,]), 10),1])
-}
+m_topicsWords <- apply(m_topic_probabilities, c(1), function(x) v_voc[tail(order(x), 10),1])
+write.table(t(m_topicsWords), file="output.txt", row.names=FALSE, col.names=FALSE, sep = "\t", quote = TRUE)
+v_TopicNames <- sprintf("Topic%s",seq(1:30))
+barplot(v_topic_pis, main="Topics Distribution", names.arg = v_TopicNames, ylab="Probability", las=2)
+
+
