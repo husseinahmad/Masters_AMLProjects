@@ -7,58 +7,65 @@ library(caret)
 m_data <- read.table("defaultCreditCard.txt", sep = '\t', header=TRUE)
 m_features <- m_data[,-c(24)]
 v_labels <- m_data[,24]
-m_trainingData <- createDataPartition(y = v_labels, p = 0.8, list = FALSE)
-
-m_trainingFeatures <- m_features[m_trainingData,]
-m_trainingLabels <- v_labels[m_trainingData]
-
-m_testingFeatures <- m_features[-m_trainingData,]
-m_testingLabels <- v_labels[-m_trainingData]
 
 
-##### no regularization, no need for CV as there is no parameters
-fit <- glmnet(x = as.matrix(m_trainingFeatures), y = m_trainingLabels,  family = "binomial", lambda = 0)
-
-lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class")
-nmright <- sum( m_testingLabels==lmpredn) 
-errratem <- (1 - nmright/length(m_testingLabels))
-print(errratem)
+##### no regularization, can't use CV.glmnet as it expects lambda values, used manual CV with 5 folds
+foldSize <- nrow(m_features) / 10
+current <- 1
+errratem <- 0
+for(i in 1:10)
+{
+  m_trainingData <- as.matrix(seq(current,current+foldSize-1))
+  current <- current + foldSize
+  m_trainingFeatures <- m_features[-m_trainingData,]
+  m_trainingLabels <- v_labels[-m_trainingData]
+  m_testingFeatures <- m_features[m_trainingData,]
+  m_testingLabels <- v_labels[m_trainingData]
+  fit <- glmnet(x = as.matrix(m_trainingFeatures), y = m_trainingLabels,  family = "binomial", lambda = 0)
+  lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class")
+  nmright <- sum( m_testingLabels==lmpredn) 
+  errratem <- errratem + (1 - nmright/length(m_testingLabels))
+}
+print(errratem/10)
 
 
 ##### Ridge regularization
-fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 0)
+fit <- cv.glmnet(x = as.matrix(m_features),y = v_labels,  family = "binomial",  keep = TRUE, alpha = 0, type.measure = "class")
 s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
-plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
-print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
-
-lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class", s = "lambda.min")
-nmright <- sum( m_testingLabels==lmpredn) 
-errratem <- (1 - nmright/length(m_testingLabels))
-print(errratem)
+print(fit$lambda.min)
+print(fit$cvm[s_lambdaPos])
+print(fit$nzero[s_lambdaPos])
 
 
 ##### Lasso regularization
-fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 1)
+fit <- cv.glmnet(x = as.matrix(m_features),y = v_labels,  family = "binomial",  keep = TRUE, alpha = 1, type.measure = "class")
 s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
-plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
-print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
+print(fit$lambda.min)
+print(fit$cvm[s_lambdaPos])
+print(fit$nzero[s_lambdaPos])
 
-lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class", s = "lambda.min")
-nmright <- sum( m_testingLabels==lmpredn) 
-errratem <- (1 - nmright/length(m_testingLabels))
-print(errratem)
-
-
-##### Ridge regularization
-fit <- cv.glmnet(x = as.matrix(m_trainingFeatures),y = m_trainingLabels,  family = "binomial",  keep = TRUE, alpha = 0.5)
+##### Elastic net regularization
+fit <- cv.glmnet(x = as.matrix(m_features),y = v_labels,  family = "binomial",  keep = TRUE, alpha = 0.25, type.measure = "class")
 s_lambdaPos <- match(fit$lambda.min, fit$lambda)
 plot(fit)
-plot(fit$fit.preval[,s_lambdaPos], m_trainingLabels - fit$fit.preval[,s_lambdaPos], ylab = "Residuals", xlab = "Fitted Values")
-print(var(fit$fit.preval[,s_lambdaPos])/var(m_trainingLabels))
+print(fit$lambda.min)
+print(fit$cvm[s_lambdaPos])
+print(fit$nzero[s_lambdaPos])
+#####################################
+fit <- cv.glmnet(x = as.matrix(m_features),y = v_labels,  family = "binomial",  keep = TRUE, alpha = 0.5, type.measure = "class")
+s_lambdaPos <- match(fit$lambda.min, fit$lambda)
+plot(fit)
+print(fit$lambda.min)
+print(fit$cvm[s_lambdaPos])
+print(fit$nzero[s_lambdaPos])
+#####################################
+fit <- cv.glmnet(x = as.matrix(m_features),y = v_labels,  family = "binomial",  keep = TRUE, alpha = 0.75, type.measure = "class")
+s_lambdaPos <- match(fit$lambda.min, fit$lambda)
+plot(fit)
+print(fit$lambda.min)
+print(fit$cvm[s_lambdaPos])
+print(fit$nzero[s_lambdaPos])
 
-lmpredn <- predict(fit, as.matrix(m_testingFeatures), type="class", s = "lambda.min")
-nmright <- sum( m_testingLabels==lmpredn) 
-errratem <- (1 - nmright/length(m_testingLabels))
-print(errratem)
+
