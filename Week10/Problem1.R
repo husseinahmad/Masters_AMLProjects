@@ -1,6 +1,6 @@
 library(klaR)
 library(caret)
-
+library(matrixStats)
 
 v_voc <- read.table("..\\..\\Datasets\\Topics\\vocab.nips.txt", sep = '\t', header=FALSE)
 m_data <- read.table("..\\..\\Datasets\\Topics\\docword.nips.txt\\docword.nips.txt", sep = ' ', header=FALSE, skip = 3)
@@ -14,7 +14,7 @@ for(i in 1:nrow(m_data))
 
 # initialize with kmeans to define initial parameters for Topic Modeling
 print("Initialize with  kmeans")
-init_model <- kmeans ( m_docs , centers = 30 )
+init_model <- kmeans ( m_docs , centers = 30)
 topics <- vector("list", length = 30)
 v_docs_topics <- vector("numeric", 1500)
 
@@ -62,7 +62,7 @@ m_hidden_deltas <- matrix(0, 1500, 30)
 # its size should be 1500 * 1 to denote documents size
 v_docs_sums <- apply(m_docs, c(1), sum)
 
-for(iteration in 1:50)
+for(iteration in 1:20)
 {
   print(paste("iteration", iteration))
   # E Step
@@ -79,28 +79,13 @@ for(iteration in 1:50)
   }
   
   # M Step
-  # update p's
-  #m_topic_probabilities <- t(m_hidden_deltas) %*% m_docs
-  # then normalize, same size as hidden deltas, 1500 * 30
-  
-  # v_normalizer <- vector("numeric", 1500)
-  # for(i in 1:1500)
-  # {
-  #   v_normalizer[i] <- sum(m_hidden_deltas[i,] * v_docs_sums[i])
-  #   # now sum it per topic to be equal to 30
-  # }
-  
+
   print("M Step")
-  for(j in 1:30)
-  {
-    accum <- vector("numeric", nrow(v_voc))
-    for(i in 1:1500)
-    {
-      accum  <- accum + (m_docs[i,] * m_hidden_deltas[i,j])
-    }
-    
-    m_topic_probabilities[j,] <- accum / sum(accum)
-  }
+  
+  m_topic_probabilities <- t(m_hidden_deltas) %*%  m_docs
+  normalizer <- t(m_hidden_deltas) %*% apply(m_docs, c(1), sum) 
+  m_topic_probabilities <- apply(m_topic_probabilities, c(2), function(x) x/normalizer)
+  
   
   # adjust topic probabilities again
   m_topic_probabilities <- (lapply(topics, computeLM))
@@ -113,9 +98,11 @@ for(iteration in 1:50)
   v_topic_pis <- apply(m_hidden_deltas, c(2), sum) / nrow(m_docs)
   
   
-  #calculate log likelihood as a check
-  #inner1 <- m_docs %*% t(m_topic_probabilities)
-  #inner2 <- apply(inner1, c(1), function(x) x + log(v_topic_pis))
+  # #calculate log likelihood as a check
+   inner1 <- m_docs %*% t(log(m_topic_probabilities)) 
+   inner2 <- inner1 %*% diag(log(v_topic_pis))
+   Q <- inner2 %*% t(m_hidden_deltas)
+  print(sum(Q))
   
 }
 
@@ -123,7 +110,7 @@ print("PI's")
 print(v_topic_pis)
 print("Topics")
 m_topicsWords <- apply(m_topic_probabilities, c(1), function(x) v_voc[tail(order(x), 10),1])
-write.table(t(m_topicsWords), file="output.txt", row.names=FALSE, col.names=FALSE, sep = "\t", quote = TRUE)
+write.table(t(m_topicsWords), file="output2.txt", row.names=FALSE, col.names=FALSE, sep = "\t", quote = TRUE)
 v_TopicNames <- sprintf("Topic%s",seq(1:30))
 barplot(v_topic_pis, main="Topics Distribution", names.arg = v_TopicNames, ylab="Probability", las=2)
 
