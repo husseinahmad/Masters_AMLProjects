@@ -1,14 +1,14 @@
 library("jpeg")
 ptm <- proc.time()
-s_imgNumber <- 2
-s_clusters <- 50
+s_imgNumber <- 3
+s_clusters <- 20
 img1 <- readJPEG(paste("TestImages\\Image", s_imgNumber, ".jpg", sep = ""), native = FALSE)
 img1 <- img1 * 255
 s_width <- dim(img1)[1]
 s_height <- dim(img1)[2]
 s_depth <- dim(img1)[3]
 dim(img1) <- c(s_width * s_height, s_depth)
-set.seed(1)
+set.seed(50)
 model_kmeans <- kmeans ( img1 , centers = s_clusters )
 img1_new <- matrix(0, s_width * s_height, s_depth )
 
@@ -47,22 +47,9 @@ for(iteration in 1:50)
   # E Step
   print("E Step")
   
-  # computePixelDeltas= function(pixel, m_means){
-  #   m_diff <- t(apply(m_means, c(1), function(x) x - pixel))
-  #   m_diff2 <- apply(m_diff, c(1), function(x)t(x) %*% x)
-  #   m_diff2 <- m_diff2 - min(m_diff2)
-  #   return(exp(-0.5 * m_diff2))
-  # }
-  # 
-  # m_deltas <- t(apply(img1, c(1), computePixelDeltas, m_means))
-  # m_deltas <- t(apply(m_deltas, c(1), function(x) x * v_pis))
-  # m_deltas <- t(apply(m_deltas, c(1), function(x) x / sum(x)))
-  
-  #technique 2
   for(j in 1:s_clusters)
   {
-    m_diff <- apply(img1, c(1), function(x) x - m_means[j,])
-    m_deltas[,j] <- apply(m_diff, c(2), function(x) sum(x^2))
+    m_deltas[,j] <- t(apply(img1, c(1), function(x) sum((x - m_means[j,])^2)))
   }
   
   m_deltas <- t(apply(m_deltas, c(1), function(x) exp(-0.5 *(x - min(x)))))
