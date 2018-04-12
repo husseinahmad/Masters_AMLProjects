@@ -44,10 +44,91 @@ apply_noise <- function(images){
   return(results)
 }
 
+readInitialPIs <- function(){
+  m_pis <- read.table("SupplementaryAndSampleData\\SupplementaryAndSampleData\\InitialParametersModel.csv", sep = ',', header=FALSE)
+}
+
+readUpdateOrder <- function(){
+  m_updateOrder <- read.table("SupplementaryAndSampleData\\SupplementaryAndSampleData\\UpdateOrderCoordinates.csv", sep = ',', header=TRUE)
+  m_updateOrder <- m_updateOrder[,-1]
+  results <- list(20)
+  for(i in 1:20){
+    m_imageUpdateOrder <- t(m_updateOrder[((2*i)-1):(2*i),])
+    m_imageUpdateOrder <- m_imageUpdateOrder + 1
+    results[[i]] <- m_imageUpdateOrder
+  }
+  
+  return(results)
+}
+
+calculateHiddenSum <- function(m_pis, s_xPos, s_yPos, s_hiddenTheta){
+  s_hiddenSum <- 0
+  #left node
+  if(s_xPos > 1)
+    s_hiddenSum <- s_hiddenSum + (s_hiddenTheta * ( (2 * m_pis[s_xPos - 1, s_yPos]) - 1 ) )
+  #right node
+  if(s_xPos < 28)
+    s_hiddenSum <- s_hiddenSum + (s_hiddenTheta * ( (2 * m_pis[s_xPos + 1, s_yPos]) - 1 ) )
+  #up node
+  if(s_yPos > 1)
+    s_hiddenSum <- s_hiddenSum + (s_hiddenTheta * ( (2 * m_pis[s_xPos, s_yPos - 1]) - 1 ) )
+  #down node
+  if(s_yPos < 28)
+    s_hiddenSum <- s_hiddenSum + (s_hiddenTheta * ( (2 * m_pis[s_xPos, s_yPos + 1]) - 1 ) )
+  
+  return(s_hiddenSum)
+}
+
+calculateXSum <- function(m_image, s_xPos, s_yPos, s_xTheta){
+  return(m_image[s_xPos, s_yPos] * s_xTheta)
+}
+
+updatePIs <- function(m_image, m_updateOrder, m_pis){
+  s_hiddenTheta <- 0.8
+  s_xTheta <- 2
+  
+  # will update pis in position
+  for(i in 1:nrow(m_updateOrder)) #784
+  {
+    s_xPos <- m_updateOrder[i,1]
+    s_yPos <- m_updateOrder[i,2]
+    
+    s_hiddenSumPos <- calculateHiddenSum(m_pis, s_xPos, s_yPos, s_hiddenTheta)
+    s_hiddenSumNeg <- calculateHiddenSum(m_pis, s_xPos, s_yPos, -1 * s_hiddenTheta)
+    s_xSumPos <- calculateXSum(m_image, s_xPos, s_yPos, s_xTheta)
+    s_xSumNeg <- calculateXSum(m_image, s_xPos, s_yPos, -1 * s_xTheta)
+    
+    m_pis[s_xPos, s_yPos] <- exp(s_hiddenSumPos + s_xSumPos) / (exp(s_hiddenSumPos + s_xSumPos) + exp(s_hiddenSumNeg + s_xSumNeg))
+  }
+  
+  return(m_pis)
+}
 
 data = load_image_file("..\\..\\Datasets\\MNSIT\\train-images-idx3-ubyte")
 images <- data$x[1:20,]
 #show_digit(images[1,])
 m_noisedImages <- apply_noise(images)
-show_digit_2d(convert_2d(images[1,]))
-show_digit_2d(m_noisedImages[[1]])
+#show_digit_2d(convert_2d(images[1,]))
+#show_digit_2d(m_noisedImages[[1]])
+m_pis <- readInitialPIs()
+l_updateOrders <- readUpdateOrder()
+
+# intialize pis for all images
+l_pis <- list(20)
+for(i in 1:20)
+{
+  l_pis[[i]] <- m_pis
+}
+
+for(iteration in 1:10)
+{
+  #calculate Q
+  
+  # update pis
+  for(i in 1:20)
+  {
+    l_pis[[i]] <- updatePIs(m_noisedImages[[i]], l_updateOrders, l_pis[[i]])
+  }
+}
+
+
