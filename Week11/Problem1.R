@@ -7,9 +7,11 @@ load_image_file <- function(filename) {
   ncol = readBin(f,'integer',n=1,size=4,endian='big')
   x = readBin(f,'integer',n=ret$n*nrow*ncol,size=1,signed=F)
   ret$x = matrix(x, ncol=nrow*ncol, byrow=T)
-  #ret$x = ret$x / 255 # scalre to be from 0 to 1
-  ret$x[ret$x < 128] = -1
-  ret$x[ret$x > 127] = 1
+  ret$x = ret$x / 255 # scale to be from 0 to 1
+  #ret$x[ret$x < 128] = -1
+  #ret$x[ret$x > 127] = 1
+  ret$x[ret$x < 0.5] = -1
+  ret$x[ret$x > 0.5] = 1
   close(f)
   ret
 }
@@ -25,7 +27,7 @@ show_digit_2d <- function(m_img, col=gray(12:1/12), ...) {
 }
 
 convert_2d <- function(arr784) {
-  return(matrix(arr784, nrow=28)[,28:1])
+  return(matrix(arr784, nrow=28, byrow = F)[,28:1])
   
 }
 
@@ -36,7 +38,9 @@ apply_noise <- function(images){
   for(i in 1:20){
     m_noiseLocs <- t(m_noise[((2*i)-1):(2*i),])
     m_noiseLocs <- m_noiseLocs + 1
+    #m_noiseLocs[,1] <- 29 - m_noiseLocs[,1]
     temp_img <- convert_2d(images[i,])
+    temp_img <- t(temp_img[,28:1])
     temp_img[m_noiseLocs] <- sapply(temp_img[m_noiseLocs], function(x) if(x == -1) {x <- 1} else { x <- -1}) 
     results[[i]] <- temp_img
   }
@@ -55,6 +59,7 @@ readUpdateOrder <- function(){
   for(i in 1:20){
     m_imageUpdateOrder <- t(m_updateOrder[((2*i)-1):(2*i),])
     m_imageUpdateOrder <- m_imageUpdateOrder + 1
+    #m_imageUpdateOrder[,1] <- 29 - m_imageUpdateOrder[,1]
     results[[i]] <- m_imageUpdateOrder
   }
   
@@ -153,10 +158,12 @@ m_variationalEnergy <- matrix(0, 20, 10)
 
 for(iteration in 1:10)
 {
+  print(paste("Iteration: ", iteration))
   for(image_index in 1:20)
   {
     #calculate Q
     s_eqLogQ <- sum(sapply(unlist(l_pis[[image_index]]), function(x) (x*log(x + s_epsilon)) + ((1-x)*log((1-x) + s_epsilon))  ))
+    #print(s_eqLogQ)
     s_eqLogPHX <- 0
     for(r in 1:28){
       for(c in 1:28){
@@ -171,4 +178,19 @@ for(iteration in 1:10)
   }
 }
 
+write.csv(m_variationalEnergy, file="Energy.csv", row.names=FALSE)
+print(m_variationalEnergy)
 
+
+m_results <- l_pis[[1]]
+for(i in 2:10)
+{
+  m_results <- cbind(m_results, l_pis[[i]])
+}
+
+m_results[m_results < 0.5] <- 0
+m_results[m_results > 0.5] <- 1
+
+write.csv(m_results, file="denoisedesults.csv", row.names=FALSE)
+
+show_digit_2d(as.matrix(m_results[,1:28]))
