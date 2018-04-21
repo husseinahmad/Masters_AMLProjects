@@ -182,8 +182,8 @@ write.csv(m_variationalEnergy, file="Energy.csv", row.names=FALSE)
 print(m_variationalEnergy)
 
 
-m_results <- l_pis[[1]]
-for(i in 2:10)
+m_results <- l_pis[[11]]
+for(i in 12:20)
 {
   m_results <- cbind(m_results, l_pis[[i]])
 }
@@ -191,6 +191,6 @@ for(i in 2:10)
 m_results[m_results <= 0.5] <- 0
 m_results[m_results > 0.5] <- 1
 
-write.csv(m_results, file="denoisedesults.csv", row.names=FALSE, col.names = FALSE)
+write.csv(m_results, file="denoised.csv", row.names=FALSE, col.names = FALSE)
 
 show_digit_2d(as.matrix(m_results[,1:28]))
